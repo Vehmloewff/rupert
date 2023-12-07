@@ -1,147 +1,147 @@
-use std::{marker::PhantomData, process::Output};
-
-pub struct ParserContext {
-	characters: Vec<char>,
-	completed: bool,
-	diagnostics: Vec<String>,
+#[derive(Debug)]
+pub enum WrapResult<T> {
+	Reject(InputStream, T),
+	Built(InputStream, T),
 }
 
-impl ParserContext {
-	pub fn new(text: &str) -> ParserContext {
-		ParserContext {
-			characters: text.chars().rev().collect(),
-			completed: false,
+#[derive(Debug)]
+pub enum ParseResult<T> {
+	Reject(InputStream),
+	Built(InputStream, T),
+}
+
+#[derive(Debug)]
+pub struct Span {
+	pub start: usize,
+	pub end: usize,
+}
+
+#[derive(Debug)]
+pub struct Diagnostic {
+	pub message: String,
+	pub span: Span,
+}
+
+#[derive(Debug)]
+pub struct InputStream {
+	reverse_chars: Vec<char>,
+	diagnostics: Vec<Diagnostic>,
+}
+
+impl InputStream {
+	pub fn new(text: &str) -> InputStream {
+		InputStream {
+			reverse_chars: text.chars().rev().collect::<Vec<char>>(),
 			diagnostics: Vec::new(),
 		}
 	}
 
-	pub fn mark_completed(&mut self) {
-		self.completed = true;
+	pub fn lookahead(&self, length: usize) -> String {
+		let chars_length = self.reverse_chars.len();
+
+		self.reverse_chars[chars_length - length..chars_length]
+			.iter()
+			.rev()
+			.collect::<String>()
 	}
 
-	pub fn is_completed(&self) -> bool {
-		self.completed
+	pub fn consume(&mut self, count: usize) -> String {
+		let mut string = String::with_capacity(count);
+
+		for _ in 0..count {
+			let character = match self.reverse_chars.pop() {
+				Some(character) => character,
+				None => break,
+			};
+
+			string.push(character)
+		}
+
+		string
 	}
 
-	pub fn next_char_lookahead(&self) -> Option<&char> {
-		self.characters.last()
+	pub fn consume_char(&mut self, expected_char: char) -> Option<char> {
+		self.consume_any_char(&[expected_char])
 	}
 
-	fn next(&mut self) -> Option<char> {
-		self.characters.pop()
-	}
-}
-
-#[derive(Debug)]
-pub enum ConsumeAction {
-	Accept(usize),
-	Reject,
-}
-
-pub trait Parser
-where
-	Self: Sized,
-{
-	type Output;
-
-	fn peek(character: char, _context: &mut ParserContext) -> Option<Self> {
-		None
-	}
-
-	fn wrap(_node: &mut Option<Self::Output>, _context: &mut ParserContext) -> Option<Self> {
-		None
-	}
-
-	fn consume(&mut self, character: char, context: &mut ParserContext) -> ConsumeAction;
-
-	fn reduce(self, context: &mut ParserContext) -> Self::Output;
-}
-
-pub fn parse<R: Sized, P: Parser>(mut parser: P, text: &str) -> R {
-	let mut context = ParserContext::new(text);
-
-	loop {
-		match context.next() {
+	pub fn consume_any_char(&mut self, expected_chars: &[char]) -> Option<char> {
+		match self.reverse_chars.last() {
 			Some(character) => {
-				let action = parser.consume(character, &mut context);
-			}
-			None => {
-				if context.is_completed() {
-					// break parser.reduce(&mut context);
+				if expected_chars.contains(character) {
+					Some(self.reverse_chars.pop().unwrap())
+				} else {
+					None
 				}
 			}
+			None => None,
+		}
+	}
+
+	pub fn consume_single_whitespace(&mut self) -> Option<char> {
+		match self.reverse_chars.last() {
+			Some(character) => {
+				if character.is_whitespace() {
+					Some(self.reverse_chars.pop().unwrap())
+				} else {
+					None
+				}
+			}
+			None => None,
+		}
+	}
+
+	pub fn consume_single_digit(&mut self) -> Option<char> {
+		match self.reverse_chars.last() {
+			Some(character) => {
+				if character.is_ascii_digit() {
+					Some(self.reverse_chars.pop().unwrap())
+				} else {
+					None
+				}
+			}
+			None => None,
+		}
+	}
+
+	pub fn consume_text(&mut self, text: &str) -> Option<String> {
+		let compare = self.lookahead(text.len());
+
+		if &compare == text {
+			Some(self.consume(text.len()))
+		} else {
+			None
+		}
+	}
+
+	pub fn consume_whitespace(&mut self) -> Option<String> {
+		let mut string = match self.consume_single_whitespace() {
+			Some(character) => String::from(character),
+			None => return None,
 		};
+
+		loop {
+			string.push(match self.consume_single_whitespace() {
+				Some(character) => character,
+				None => break,
+			})
+		}
+
+		Some(string)
+	}
+
+	pub fn consume_digits(&mut self) -> Option<String> {
+		let mut string = match self.consume_single_digit() {
+			Some(character) => String::from(character),
+			None => return None,
+		};
+
+		loop {
+			string.push(match self.consume_single_digit() {
+				Some(character) => character,
+				None => break,
+			})
+		}
+
+		Some(string)
 	}
 }
-
-// macro_rules! parser_peeks {
-// 	(type $type:ident, $($element:ident),*) => {
-// 		{
-// 			$(
-// 				{
-// 					struct test<t: parser>(option<t>);
-// 					test(none::<$element>);
-// 				}
-// 			)*
-
-// 			struct parserpeeks();
-
-// 			impl parserpeeks {
-// 				pub fn peek(character: char, context: &mut parsercontext) -> option<$type> {
-// 					if false { none }
-// 					$(
-// 						else if let some(reduced) = $element::peek(' ', context) {
-// 							some(reduced)
-// 						}
-// 					)*
-// 					else { none }
-// 				}
-// 			}
-
-// 			parserpeeks()
-// 		}
-// 	};
-// }
-
-// fn fig() {
-// 	let peeks = parser_peeks!(type foochild, foo);
-// }
-
-// macro_rules! parser_inner {
-// 	() => {};
-// }
-
-// #[derive(debug)]
-// struct foochild();
-
-// struct foo {}
-
-// impl parser for foo {
-// 	type output = foochild;
-
-// 	fn reduce(self, context: &mut parsercontext) -> self::output {
-// 		if let none = some(true) {}
-
-// 		foochild();
-// 	}
-
-// 	fn consume(&mut self, character: char, context: &mut parsercontext) -> consumeaction {
-// 		consumeaction::accept(10)
-// 	}
-// }
-
-// fn foo() {
-// 	{
-// 		struct test<t: parser>(option<t>);
-// 		test(none::<foo>);
-
-// 		foo::peek(' ', context);
-// 	}
-// }
-
-// // pub fn combine<result: sized, builder: sized + parser<result>>(builders: vec<builder>) {
-// // 	let builder = builders.get(0).unwrap();
-// // 	builder::peek(' ', &mut parsercontext::new("foo"));
-
-// // 	// combine_parsers! { consumeaction};
-// // }

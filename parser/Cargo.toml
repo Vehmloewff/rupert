@@ -6,9 +6,4 @@ edition = "2021"
 [lib]
 path = "lib.rs"
 
-[[bin]]
-name = "rupert"
-path = "main.rs"
-
 [dependencies]
-tokio = { version = "1.34.0", features = ["full"] }

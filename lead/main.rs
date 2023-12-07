@@ -1,4 +1,5 @@
-use rupert_parser::{parse_expression, InputStream};
+use rupert_lead::parse_expression;
+use rupert_parser::InputStream;
 
 fn main() {
 	let code = "4 + 5 * 6";
