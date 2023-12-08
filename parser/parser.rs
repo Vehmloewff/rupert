@@ -16,14 +16,33 @@ pub struct Span {
 	pub end: usize,
 }
 
+impl Span {
+	pub fn new<U: Into<usize>>(start: U, end: U) -> Span {
+		Span {
+			start: start.into(),
+			end: end.into(),
+		}
+	}
+}
+
 #[derive(Debug)]
 pub struct Diagnostic {
 	pub message: String,
 	pub span: Span,
 }
 
+impl Diagnostic {
+	pub fn new<S: Into<String>>(message: S, span: Span) -> Diagnostic {
+		Diagnostic {
+			message: message.into(),
+			span,
+		}
+	}
+}
+
 #[derive(Debug)]
 pub struct InputStream {
+	index: usize,
 	reverse_chars: Vec<char>,
 	diagnostics: Vec<Diagnostic>,
 }
@@ -31,9 +50,20 @@ pub struct InputStream {
 impl InputStream {
 	pub fn new(text: &str) -> InputStream {
 		InputStream {
+			index: 0,
 			reverse_chars: text.chars().rev().collect::<Vec<char>>(),
 			diagnostics: Vec::new(),
 		}
+	}
+
+	pub fn get_index(&self) -> usize {
+		self.index
+	}
+
+	pub fn finish(mut self) -> (Vec<char>, Vec<Diagnostic>) {
+		self.reverse_chars.reverse();
+
+		(self.reverse_chars, self.diagnostics)
 	}
 
 	pub fn lookahead(&self, length: usize) -> String {
@@ -45,11 +75,16 @@ impl InputStream {
 			.collect::<String>()
 	}
 
+	fn pop(&mut self) -> Option<char> {
+		self.index += 1;
+		self.reverse_chars.pop()
+	}
+
 	pub fn consume(&mut self, count: usize) -> String {
 		let mut string = String::with_capacity(count);
 
 		for _ in 0..count {
-			let character = match self.reverse_chars.pop() {
+			let character = match self.pop() {
 				Some(character) => character,
 				None => break,
 			};
@@ -68,7 +103,7 @@ impl InputStream {
 		match self.reverse_chars.last() {
 			Some(character) => {
 				if expected_chars.contains(character) {
-					Some(self.reverse_chars.pop().unwrap())
+					Some(self.pop().unwrap())
 				} else {
 					None
 				}
@@ -81,7 +116,7 @@ impl InputStream {
 		match self.reverse_chars.last() {
 			Some(character) => {
 				if character.is_whitespace() {
-					Some(self.reverse_chars.pop().unwrap())
+					Some(self.pop().unwrap())
 				} else {
 					None
 				}
@@ -94,7 +129,7 @@ impl InputStream {
 		match self.reverse_chars.last() {
 			Some(character) => {
 				if character.is_ascii_digit() {
-					Some(self.reverse_chars.pop().unwrap())
+					Some(self.pop().unwrap())
 				} else {
 					None
 				}

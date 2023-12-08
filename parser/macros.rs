@@ -51,3 +51,27 @@ macro_rules! wrap_recursive {
         }
     };
 }
+
+#[macro_export]
+macro_rules! parse {
+	($input:ident, $func:ident) => {{
+		let input: &str = $input;
+		let stream = InputStream::new(input);
+
+		let res: ParseResult<_> = $func(stream);
+
+		let (stream, ast) = match res {
+			ParseResult::Built(stream, ast) => (stream, Some(ast)),
+			ParseResult::Reject(stream) => (stream, None),
+		};
+
+		let index = stream.get_index();
+		let (unparsed, mut diagnostics) = stream.finish();
+
+		if unparsed.len() > 0 {
+			diagnostics.push(Diagnostic::new("Could not parse input", Span::new(index, index + unparsed.len())))
+		}
+
+		(ast, diagnostics)
+	}};
+}
