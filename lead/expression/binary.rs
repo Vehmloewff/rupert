@@ -1,7 +1,7 @@
 use super::{parse_expression, Expression};
 use rupert_parser::{wrap, InputStream, ParseResult, Span, WrapResult};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
 	Addition,
 	Subtraction,
@@ -88,7 +88,7 @@ fn parse_binary_operator(mut stream: InputStream, operators: &[BinaryOperator]) 
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BinaryExpression {
 	span: Span,
 	left: Box<Expression>,
@@ -102,22 +102,24 @@ pub fn wrap_binary_expression(stream: InputStream, left: Expression) -> WrapResu
 }
 
 fn wrap_with_operators(stream: InputStream, left: Expression, operators: &[BinaryOperator]) -> WrapResult<Expression> {
-	let start_pin = stream.start_span();
-	dbg!(&start_pin, &stream);
+	let start_pin = stream.pin();
 
 	let (mut stream, operator) = match parse_binary_operator(stream, operators) {
 		ParseResult::Built(stream, operator) => (stream, operator),
 		ParseResult::Reject(stream) => return WrapResult::Reject(stream, left),
 	};
 
-	dbg!(operators, &operator);
 	let operator_span = start_pin.build(&stream);
 
 	stream.consume_whitespace();
 
 	let (stream, right) = match parse_expression(stream) {
 		ParseResult::Built(stream, expression) => (stream, expression),
-		ParseResult::Reject(stream) => (stream, Expression::Never),
+		ParseResult::Reject(mut stream) => {
+			start_pin.register_error(&mut stream, "Expected a right-hand side expression");
+
+			(stream, Expression::Never)
+		}
 	};
 
 	let node = BinaryExpression {

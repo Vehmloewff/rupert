@@ -1,14 +1,14 @@
 use super::Expression;
 use rupert_parser::{InputStream, ParseResult, Span};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NumberLiteral {
 	span: Span,
 	number: f64,
 }
 
 pub fn parse_number_literal(mut stream: InputStream) -> ParseResult<Expression> {
-	let span_builder = stream.start_span();
+	let span_builder = stream.pin();
 	let mut start = String::new();
 	let mut has_decimal = false;
 

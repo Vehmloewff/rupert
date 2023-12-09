@@ -127,7 +127,7 @@ impl InputStream {
 		self.index
 	}
 
-	pub fn start_span(&self) -> SpanBuilder {
+	pub fn pin(&self) -> SpanBuilder {
 		SpanBuilder { start: self.get_index() }
 	}
 
@@ -150,7 +150,11 @@ impl InputStream {
 			.collect::<String>()
 	}
 
-	fn pop(&mut self) -> Option<char> {
+	pub fn peek(&self) -> Option<char> {
+		self.reverse_chars.last().cloned()
+	}
+
+	pub fn pop(&mut self) -> Option<char> {
 		self.index += 1;
 		self.reverse_chars.pop()
 	}

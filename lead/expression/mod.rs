@@ -1,23 +1,26 @@
 mod binary;
 mod number_literal;
+mod string_literal;
 
 use crate::whitespace::nerf_whitespace;
 
 use self::{
 	binary::{wrap_binary_expression, BinaryExpression},
 	number_literal::{parse_number_literal, NumberLiteral},
+	string_literal::{parse_string_literal, StringLiteral},
 };
 use rupert_parser::{any, wrap_recursive, InputStream, ParseResult, WrapResult};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
 	NumberLiteral(NumberLiteral),
+	StringLiteral(StringLiteral),
 	BinaryExpression(BinaryExpression),
 	Never,
 }
 
 pub fn parse_expression(stream: InputStream) -> ParseResult<Expression> {
-	let result = any!(stream; parse_number_literal);
+	let result = any!(stream; parse_number_literal, parse_string_literal);
 
 	match result {
 		ParseResult::Built(stream, expression) => {
