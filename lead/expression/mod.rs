@@ -4,7 +4,7 @@ mod number_literal;
 use crate::whitespace::nerf_whitespace;
 
 use self::{
-	binary::{wrap_binary_expression, AdditiveExpression, MultiplicativeExpression},
+	binary::{wrap_binary_expression, BinaryExpression},
 	number_literal::{parse_number_literal, NumberLiteral},
 };
 use rupert_parser::{any, wrap_recursive, InputStream, ParseResult, WrapResult};
@@ -12,8 +12,7 @@ use rupert_parser::{any, wrap_recursive, InputStream, ParseResult, WrapResult};
 #[derive(Debug)]
 pub enum Expression {
 	NumberLiteral(NumberLiteral),
-	AdditiveExpression(AdditiveExpression),
-	MultiplicativeExpression(MultiplicativeExpression),
+	BinaryExpression(BinaryExpression),
 	Never,
 }
 

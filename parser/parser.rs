@@ -1,19 +1,53 @@
-#[derive(Debug)]
+use rutils::sub_usize;
+
+#[derive(Debug, Clone)]
 pub enum WrapResult<T> {
 	Reject(InputStream, T),
 	Built(InputStream, T),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ParseResult<T> {
 	Reject(InputStream),
 	Built(InputStream, T),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct SpanBuilder {
+	start: usize,
+}
+
+impl SpanBuilder {
+	pub fn build(&self, stream: &InputStream) -> Span {
+		Span {
+			start: self.start,
+			end: stream.get_index(),
+		}
+	}
+
+	pub fn register_error<S: Into<String>>(&self, stream: &mut InputStream, message: S) {
+		let diagnostic = Diagnostic::new_error(self.build(&stream), message);
+
+		stream.add_diagnostic(diagnostic)
+	}
+
+	pub fn register_warn<S: Into<String>>(&self, stream: &mut InputStream, message: S) {
+		let diagnostic = Diagnostic::new_warn(self.build(&stream), message);
+
+		stream.add_diagnostic(diagnostic)
+	}
+
+	pub fn build_notice<S: Into<String>>(&self, stream: &mut InputStream, message: S) {
+		let diagnostic = Diagnostic::new_notice(self.build(&stream), message);
+
+		stream.add_diagnostic(diagnostic)
+	}
+}
+
+#[derive(Debug, Clone)]
 pub struct Span {
-	pub start: usize,
-	pub end: usize,
+	start: usize,
+	end: usize,
 }
 
 impl Span {
@@ -23,24 +57,57 @@ impl Span {
 			end: end.into(),
 		}
 	}
+
+	pub fn get_start_index(&self) -> usize {
+		self.start
+	}
+
+	pub fn get_end_index(&self) -> usize {
+		self.end
+	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum DiagnosticLevel {
+	Notice,
+	Warn,
+	Error,
+}
+
+#[derive(Debug, Clone)]
 pub struct Diagnostic {
-	pub message: String,
 	pub span: Span,
+	pub message: String,
+	pub level: DiagnosticLevel,
 }
 
 impl Diagnostic {
-	pub fn new<S: Into<String>>(message: S, span: Span) -> Diagnostic {
+	pub fn new_error<S: Into<String>>(span: Span, message: S) -> Diagnostic {
 		Diagnostic {
-			message: message.into(),
 			span,
+			message: message.into(),
+			level: DiagnosticLevel::Error,
+		}
+	}
+
+	pub fn new_warn<S: Into<String>>(span: Span, message: S) -> Diagnostic {
+		Diagnostic {
+			span,
+			message: message.into(),
+			level: DiagnosticLevel::Warn,
+		}
+	}
+
+	pub fn new_notice<S: Into<String>>(span: Span, message: S) -> Diagnostic {
+		Diagnostic {
+			span,
+			message: message.into(),
+			level: DiagnosticLevel::Notice,
 		}
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InputStream {
 	index: usize,
 	reverse_chars: Vec<char>,
@@ -60,6 +127,14 @@ impl InputStream {
 		self.index
 	}
 
+	pub fn start_span(&self) -> SpanBuilder {
+		SpanBuilder { start: self.get_index() }
+	}
+
+	pub fn add_diagnostic(&mut self, diagnostic: Diagnostic) {
+		self.diagnostics.push(diagnostic)
+	}
+
 	pub fn finish(mut self) -> (Vec<char>, Vec<Diagnostic>) {
 		self.reverse_chars.reverse();
 
@@ -69,7 +144,7 @@ impl InputStream {
 	pub fn lookahead(&self, length: usize) -> String {
 		let chars_length = self.reverse_chars.len();
 
-		self.reverse_chars[chars_length - length..chars_length]
+		self.reverse_chars[sub_usize(chars_length, length)..chars_length]
 			.iter()
 			.rev()
 			.collect::<String>()

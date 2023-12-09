@@ -8,7 +8,7 @@ pub struct NumberLiteral {
 }
 
 pub fn parse_number_literal(mut stream: InputStream) -> ParseResult<Expression> {
-	let index = stream.get_index();
+	let span_builder = stream.start_span();
 	let mut start = String::new();
 	let mut has_decimal = false;
 
@@ -27,8 +27,10 @@ pub fn parse_number_literal(mut stream: InputStream) -> ParseResult<Expression> 
 		ParseResult::Reject(stream)
 	} else {
 		let number = start.parse::<f64>().unwrap_or(0.0);
-		let span = Span::new(index, stream.get_index());
-		let node = NumberLiteral { span, number };
+		let node = NumberLiteral {
+			span: span_builder.build(&stream),
+			number,
+		};
 
 		ParseResult::Built(stream, Expression::NumberLiteral(node))
 	}

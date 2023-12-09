@@ -1,3 +1,3 @@
 [workspace]
 name = "rupert"
-members = ["parser", "lead"]
+members = ["parser", "lead", "rutils"]

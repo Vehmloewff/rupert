@@ -6,12 +6,12 @@ macro_rules! any {
 
             $(
                 let stream = match $func(stream) {
-                    ParseResult::Reject(stream) => stream,
-                    ParseResult::Built(stream, node) => break 'block ParseResult::Built(stream, node),
+                    $crate::ParseResult::Reject(stream) => stream,
+                    $crate::ParseResult::Built(stream, node) => break 'block $crate::ParseResult::Built(stream, node),
                 };
             )*
 
-            ParseResult::Reject(stream)
+            $crate::ParseResult::Reject(stream)
         }
     };
 }
@@ -25,12 +25,12 @@ macro_rules! wrap {
 
             $(
                 let (stream, node) = match $func(stream, node) {
-                    WrapResult::Reject(stream, node) => (stream, node),
-                    WrapResult::Built(stream, node) => break 'block WrapResult::Built(stream, node),
+                    $crate::WrapResult::Reject(stream, node) => (stream, node),
+                    $crate::WrapResult::Built(stream, node) => break 'block $crate::WrapResult::Built(stream, node),
                 };
             )*
 
-            WrapResult::Reject(stream, node)
+            $crate::WrapResult::Reject(stream, node)
         }
     };
 }
@@ -42,7 +42,7 @@ macro_rules! wrap_recursive {
             let mut result = $crate::wrap!($stream, $node; $($func),+);
 
 			loop {
-				if let WrapResult::Built(stream, node) = result {
+				if let $crate::WrapResult::Built(stream, node) = result {
 					result = $crate::wrap!(stream, node; $($func),+);
 				}
 
@@ -56,20 +56,23 @@ macro_rules! wrap_recursive {
 macro_rules! parse {
 	($input:ident, $func:ident) => {{
 		let input: &str = $input;
-		let stream = InputStream::new(input);
+		let stream = $crate::InputStream::new(input);
 
-		let res: ParseResult<_> = $func(stream);
+		let res: $crate::ParseResult<_> = $func(stream);
 
 		let (stream, ast) = match res {
-			ParseResult::Built(stream, ast) => (stream, Some(ast)),
-			ParseResult::Reject(stream) => (stream, None),
+			$crate::ParseResult::Built(stream, ast) => (stream, Some(ast)),
+			$crate::ParseResult::Reject(stream) => (stream, None),
 		};
 
 		let index = stream.get_index();
 		let (unparsed, mut diagnostics) = stream.finish();
 
 		if unparsed.len() > 0 {
-			diagnostics.push(Diagnostic::new("Could not parse input", Span::new(index, index + unparsed.len())))
+			diagnostics.push($crate::Diagnostic::new_error(
+				$crate::Span::new(index, index + unparsed.len()),
+				"Could not parse input",
+			))
 		}
 
 		(ast, diagnostics)

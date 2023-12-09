@@ -12,3 +12,10 @@ dependencies = [
 [[package]]
 name = "rupert_parser"
 version = "0.1.0"
+dependencies = [
+ "rutils",
+]
+
+[[package]]
+name = "rutils"
+version = "0.1.0"
