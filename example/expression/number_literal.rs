@@ -1,5 +1,5 @@
 use super::Expression;
-use rupert_parser::{InputStream, ParseResult, Span};
+use rupert::{InputStream, ParseResult, Span};
 
 #[derive(Debug, Clone)]
 pub struct NumberLiteral {

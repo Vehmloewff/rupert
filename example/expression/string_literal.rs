@@ -1,5 +1,5 @@
 use super::{parse_expression, Expression};
-use rupert_parser::{Diagnostic, InputStream, ParseResult, Span};
+use rupert::{Diagnostic, InputStream, ParseResult, Span};
 
 #[derive(Debug, Clone)]
 pub struct StringLiteral {

@@ -9,7 +9,7 @@ use self::{
 	number_literal::{parse_number_literal, NumberLiteral},
 	string_literal::{parse_string_literal, StringLiteral},
 };
-use rupert_parser::{any, wrap_recursive, InputStream, ParseResult, WrapResult};
+use rupert::{any, wrap_recursive, InputStream, ParseResult, WrapResult};
 
 #[derive(Debug, Clone)]
 pub enum Expression {

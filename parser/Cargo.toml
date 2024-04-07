@@ -1,5 +1,5 @@
 [package]
-name = "rupert_parser"
+name = "rupert"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 path = "lib.rs"
 
 [dependencies]
-rutils = { path = "../rutils" }
+rutils = { git = "ssh://github.com/vehmloewff/rutils", rev = "0.2.0" }

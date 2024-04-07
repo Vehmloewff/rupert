@@ -51,11 +51,8 @@ pub struct Span {
 }
 
 impl Span {
-	pub fn new<U: Into<usize>>(start: U, end: U) -> Span {
-		Span {
-			start: start.into(),
-			end: end.into(),
-		}
+	pub fn new(start: usize, end: usize) -> Span {
+		Span { start, end }
 	}
 
 	pub fn get_start_index(&self) -> usize {
@@ -82,7 +79,7 @@ pub struct Diagnostic {
 }
 
 impl Diagnostic {
-	pub fn new_error<S: Into<String>>(span: Span, message: S) -> Diagnostic {
+	pub fn new_error(span: Span, message: impl Into<String>) -> Diagnostic {
 		Diagnostic {
 			span,
 			message: message.into(),
@@ -90,7 +87,7 @@ impl Diagnostic {
 		}
 	}
 
-	pub fn new_warn<S: Into<String>>(span: Span, message: S) -> Diagnostic {
+	pub fn new_warn(span: Span, message: impl Into<String>) -> Diagnostic {
 		Diagnostic {
 			span,
 			message: message.into(),
@@ -98,7 +95,7 @@ impl Diagnostic {
 		}
 	}
 
-	pub fn new_notice<S: Into<String>>(span: Span, message: S) -> Diagnostic {
+	pub fn new_notice(span: Span, message: impl Into<String>) -> Diagnostic {
 		Diagnostic {
 			span,
 			message: message.into(),
@@ -123,12 +120,23 @@ impl InputStream {
 		}
 	}
 
+	pub fn span_instant(&self) -> Span {
+		Span {
+			start: self.index,
+			end: self.index,
+		}
+	}
+
 	pub fn get_index(&self) -> usize {
 		self.index
 	}
 
 	pub fn pin(&self) -> SpanBuilder {
 		SpanBuilder { start: self.get_index() }
+	}
+
+	pub fn instant_error(&mut self, message: impl Into<String>) {
+		self.add_diagnostic(Diagnostic::new_error(self.span_instant(), message))
 	}
 
 	pub fn add_diagnostic(&mut self, diagnostic: Diagnostic) {

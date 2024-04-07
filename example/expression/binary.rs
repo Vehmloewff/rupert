@@ -1,5 +1,5 @@
 use super::{parse_expression, Expression};
-use rupert_parser::{wrap, InputStream, ParseResult, Span, WrapResult};
+use rupert::{wrap, InputStream, ParseResult, Span, WrapResult};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {

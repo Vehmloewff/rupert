@@ -1,5 +1,5 @@
 [package]
-name = "rupert_lead"
+name = "rupert_example"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,4 +8,4 @@ name = "rupert"
 path = "main.rs"
 
 [dependencies]
-rupert_parser = { path = "../parser" }
+rupert = { path = "../parser" }
