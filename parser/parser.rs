@@ -163,6 +163,10 @@ impl InputStream {
 		self.reverse_chars.last().cloned()
 	}
 
+	pub fn peek_at(&self, index: usize) -> Option<char> {
+		self.reverse_chars.get(self.reverse_chars.len() - index - 1).cloned()
+	}
+
 	pub fn pop(&mut self) -> Option<char> {
 		self.index += 1;
 		self.reverse_chars.pop()
@@ -231,7 +235,7 @@ impl InputStream {
 		let mut word = String::new();
 
 		loop {
-			let char = match self.peek() {
+			let char = match self.peek_at(word.len()) {
 				Some(char) => char,
 				None => break,
 			};
@@ -240,7 +244,6 @@ impl InputStream {
 				break;
 			}
 
-			self.reverse_chars.pop();
 			word.push(char)
 		}
 
