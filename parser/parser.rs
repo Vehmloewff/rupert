@@ -225,6 +225,48 @@ impl InputStream {
 		}
 	}
 
+	/// Gets the next word, which is define by [a-zA-Z0-9_]
+	pub fn peek_word(&mut self) -> Option<String> {
+		let mut word = String::new();
+
+		loop {
+			let char = match self.peek() {
+				Some(char) => char,
+				None => break,
+			};
+
+			if !char.is_alphanumeric() && char != '_' {
+				break;
+			}
+
+			self.reverse_chars.pop();
+			word.push(char)
+		}
+
+		if word.is_empty() {
+			None
+		} else {
+			Some(word)
+		}
+	}
+
+	/// Consumes `text` as long as it is in a word form.
+	pub fn consume_word(&mut self, name: &str) -> Option<Span> {
+		let next_word = self.peek_word()?;
+
+		if next_word == name {
+			let index = self.index;
+			self.consume(name.len());
+
+			Some(Span {
+				start: index,
+				end: index + name.len(),
+			})
+		} else {
+			None
+		}
+	}
+
 	pub fn consume_text(&mut self, text: &str) -> Option<String> {
 		let compare = self.lookahead(text.len());
 
