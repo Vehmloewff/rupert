@@ -1,4 +1,5 @@
 use rutils::sub_usize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub enum WrapResult<T> {
@@ -44,7 +45,7 @@ impl SpanBuilder {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Span {
 	start: usize,
 	end: usize,
@@ -64,14 +65,14 @@ impl Span {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DiagnosticLevel {
 	Notice,
 	Warn,
 	Error,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Diagnostic {
 	pub span: Span,
 	pub message: String,

@@ -8,3 +8,4 @@ path = "lib.rs"
 
 [dependencies]
 rutils = { git = "ssh://github.com/vehmloewff/rutils", rev = "0.2.0" }
+serde = { version = "1.0.197", features = ["derive"] }
